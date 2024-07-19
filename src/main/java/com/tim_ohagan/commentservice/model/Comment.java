@@ -1,6 +1,7 @@
 package com.tim_ohagan.commentservice.model;
 
 import lombok.Data;
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.Instant;
@@ -9,7 +10,7 @@ import java.time.Instant;
 @Document(collection = "comments")
 public class Comment {
     @Id
-    private String id;
+    private ObjectId id;
     private String postID;
     private String userID;
     private String username;

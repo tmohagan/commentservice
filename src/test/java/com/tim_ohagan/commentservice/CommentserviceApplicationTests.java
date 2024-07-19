@@ -10,7 +10,6 @@ class CommentserviceApplicationTests {
 
     @Test
     void contextLoads() {
-        // This test will pass if the application context loads successfully
     }
 
 }
