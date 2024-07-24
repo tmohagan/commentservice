@@ -41,7 +41,8 @@ public class CommentController {
     @GetMapping("/{parentType}/{parentID}")
     public ResponseEntity<List<Comment>> getCommentsByParent(@PathVariable String parentType, @PathVariable String parentID) {
         try {
-            return ResponseEntity.ok(commentService.getCommentsByParent(parentID, parentType));
+            List<Comment> comments = commentService.getCommentsByParent(parentID, parentType);
+            return ResponseEntity.ok(comments);
         } catch (Exception e) {
             logger.error("Error fetching comments for " + parentType + " with ID: " + parentID, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
