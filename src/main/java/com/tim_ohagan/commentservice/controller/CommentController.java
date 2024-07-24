@@ -19,7 +19,6 @@ public class CommentController {
 
     private static final Logger logger = LoggerFactory.getLogger(CommentController.class);
 
-
     @Autowired
     private CommentService commentService;
 
@@ -39,27 +38,50 @@ public class CommentController {
         }
     }
 
-    @GetMapping("/{postID}")
-    public ResponseEntity<List<Comment>> getCommentsByPostID(@PathVariable String postID) {
+    @GetMapping("/{parentType}/{parentID}")
+    public ResponseEntity<List<Comment>> getCommentsByParent(@PathVariable String parentType, @PathVariable String parentID) {
         try {
-            return ResponseEntity.ok(commentService.getCommentsByPostID(postID));
+            return ResponseEntity.ok(commentService.getCommentsByParent(parentID, parentType));
         } catch (Exception e) {
-            logger.error("Error fetching comments for postID: " + postID, e);
+            logger.error("Error fetching comments for " + parentType + " with ID: " + parentID, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Comment> updateComment(@PathVariable String id, @RequestBody Comment comment) {
-        ObjectId objectId = new ObjectId(id);
-        return ResponseEntity.ok(commentService.updateComment(objectId, comment));
+    public ResponseEntity<Comment> updateComment(@PathVariable String id, @RequestBody Map<String, String> requestBody) {
+        try {
+            ObjectId objectId = new ObjectId(id);
+            String content = requestBody.get("content");
+            String userID = requestBody.get("userID");
+            
+            Comment updatedComment = new Comment();
+            updatedComment.setContent(content);
+            
+            Comment result = commentService.updateComment(objectId, updatedComment, userID);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            logger.error("Error updating comment", e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        } catch (Exception e) {
+            logger.error("Error updating comment", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteComment(@PathVariable String id, @RequestBody Map<String, String> requestBody) {
-        String userID = requestBody.get("userID");
-        ObjectId objectId = new ObjectId(id);
-        commentService.deleteComment(objectId, userID);
-        return ResponseEntity.ok().build();
+        try {
+            String userID = requestBody.get("userID");
+            ObjectId objectId = new ObjectId(id);
+            commentService.deleteComment(objectId, userID);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            logger.error("Error deleting comment", e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (Exception e) {
+            logger.error("Error deleting comment", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

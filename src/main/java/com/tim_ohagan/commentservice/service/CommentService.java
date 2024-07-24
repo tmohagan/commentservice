@@ -14,8 +14,8 @@ public class CommentService {
     @Autowired
     private CommentRepository commentRepository;
 
-    public List<Comment> getCommentsByPostID(String postID) {
-        return commentRepository.findByPostID(postID);
+    public List<Comment> getCommentsByParent(String parentID, String parentType) {
+        return commentRepository.findByParentIDAndParentType(parentID, parentType);
     }
 
     public Comment createComment(Comment comment) {
@@ -24,9 +24,13 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
-    public Comment updateComment(ObjectId id, Comment updatedComment) {
+    public Comment updateComment(ObjectId id, Comment updatedComment, String userID) {
         Comment existingComment = commentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
+        
+        if (!existingComment.getUserID().equals(userID)) {
+            throw new RuntimeException("User not authorized to update this comment");
+        }
         
         existingComment.setContent(updatedComment.getContent());
         existingComment.setUpdatedAt(Instant.now());
