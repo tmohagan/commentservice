@@ -35,8 +35,10 @@ public Comment createComment(Comment comment) {
     }
 }
 
-    public Comment updateComment(ObjectId id, Comment updatedComment, String userID) {
-        Comment existingComment = commentRepository.findById(id)
+public Comment updateComment(String id, Comment updatedComment, String userID) {
+    try {
+        ObjectId objectId = new ObjectId(id);
+        Comment existingComment = commentRepository.findById(objectId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
         
         if (!existingComment.getUserID().equals(userID)) {
@@ -47,16 +49,24 @@ public Comment createComment(Comment comment) {
         existingComment.setUpdatedAt(Instant.now());
         
         return commentRepository.save(existingComment);
+    } catch (IllegalArgumentException e) {
+        throw new RuntimeException("Invalid comment ID");
     }
-    
-    public void deleteComment(ObjectId id, String userID) {
-        Comment comment = commentRepository.findById(id)
+}
+
+public void deleteComment(String id, String userID) {
+    try {
+        ObjectId objectId = new ObjectId(id);
+        Comment comment = commentRepository.findById(objectId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
         
         if (!comment.getUserID().equals(userID)) {
             throw new RuntimeException("User not authorized to delete this comment");
         }
         
-        commentRepository.deleteById(id);
+        commentRepository.deleteById(objectId);
+    } catch (IllegalArgumentException e) {
+        throw new RuntimeException("Invalid comment ID");
     }
+}
 }

@@ -52,21 +52,17 @@ public class CommentController {
     @PutMapping("/{id}")
     public ResponseEntity<Comment> updateComment(@PathVariable String id, @RequestBody Map<String, String> requestBody) {
         try {
-            ObjectId objectId = new ObjectId(id);
             String content = requestBody.get("content");
             String userID = requestBody.get("userID");
             
             Comment updatedComment = new Comment();
             updatedComment.setContent(content);
             
-            Comment result = commentService.updateComment(objectId, updatedComment, userID);
+            Comment result = commentService.updateComment(id, updatedComment, userID);
             return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
             logger.error("Error updating comment", e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
-        } catch (Exception e) {
-            logger.error("Error updating comment", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
@@ -74,15 +70,11 @@ public class CommentController {
     public ResponseEntity<Void> deleteComment(@PathVariable String id, @RequestBody Map<String, String> requestBody) {
         try {
             String userID = requestBody.get("userID");
-            ObjectId objectId = new ObjectId(id);
-            commentService.deleteComment(objectId, userID);
+            commentService.deleteComment(id, userID);
             return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
             logger.error("Error deleting comment", e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        } catch (Exception e) {
-            logger.error("Error deleting comment", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }
