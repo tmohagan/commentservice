@@ -6,6 +6,7 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -15,14 +16,24 @@ public class CommentService {
     private CommentRepository commentRepository;
 
     public List<Comment> getCommentsByParent(String parentID, String parentType) {
-        return commentRepository.findByParentIDAndParentType(parentID, parentType);
+    try {
+        ObjectId objectId = new ObjectId(parentID);
+        return commentRepository.findByParentIDAndParentType(objectId.toHexString(), parentType);
+    } catch (IllegalArgumentException e) {
+        return Collections.emptyList();
     }
+}
 
-    public Comment createComment(Comment comment) {
+public Comment createComment(Comment comment) {
+    try {
+        ObjectId.isValid(comment.getParentID()); // Validate the ID
         comment.setCreatedAt(Instant.now());
         comment.setUpdatedAt(Instant.now());
         return commentRepository.save(comment);
+    } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException("Invalid parentID");
     }
+}
 
     public Comment updateComment(ObjectId id, Comment updatedComment, String userID) {
         Comment existingComment = commentRepository.findById(id)
