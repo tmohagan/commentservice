@@ -15,10 +15,12 @@ public class Comment {
     @JsonSerialize(using = ToStringSerializer.class)
     private ObjectId id;
     private String parentID;
-    private String parentType; // "post" or "project"
+    private String parentType;
     private String userID;
     private String username;
     private String content;
     private Instant createdAt;
     private Instant updatedAt;
+    private Double sentimentScore;
+    private String sentiment;
 }

@@ -6,75 +6,56 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.bson.types.ObjectId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Map;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/comments")
+@RequestMapping("/api/comments")
 public class CommentController {
-
-    private static final Logger logger = LoggerFactory.getLogger(CommentController.class);
 
     @Autowired
     private CommentService commentService;
 
-    @GetMapping("/health")
-    public ResponseEntity<String> healthCheck() {
-        return ResponseEntity.ok("Service is up and running");
+    @GetMapping
+    public Flux<Comment> getCommentsByParent(
+            @RequestParam String parentID,
+            @RequestParam String parentType) {
+        return commentService.getCommentsByParent(parentID, parentType);
     }
 
     @PostMapping
-    public ResponseEntity<Comment> createComment(@RequestBody Comment comment) {
-        try {
-            Comment createdComment = commentService.createComment(comment);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdComment);
-        } catch (Exception e) {
-            logger.error("Error creating comment", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-    }
-
-    @GetMapping("/{parentType}/{parentID}")
-    public ResponseEntity<List<Comment>> getCommentsByParent(@PathVariable String parentType, @PathVariable String parentID) {
-        try {
-            List<Comment> comments = commentService.getCommentsByParent(parentID, parentType);
-            return ResponseEntity.ok(comments);
-        } catch (Exception e) {
-            logger.error("Error fetching comments for " + parentType + " with ID: " + parentID, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+    public Mono<ResponseEntity<Comment>> createComment(@RequestBody Comment comment) {
+        return commentService.createComment(comment)
+                .map(savedComment -> ResponseEntity.status(HttpStatus.CREATED).body(savedComment))
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Comment> updateComment(@PathVariable String id, @RequestBody Map<String, String> requestBody) {
-        try {
-            String content = requestBody.get("content");
-            String userID = requestBody.get("userID");
-            
-            Comment updatedComment = new Comment();
-            updatedComment.setContent(content);
-            
-            Comment result = commentService.updateComment(id, updatedComment, userID);
-            return ResponseEntity.ok(result);
-        } catch (RuntimeException e) {
-            logger.error("Error updating comment", e);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
-        }
+    public Mono<ResponseEntity<Comment>> updateComment(
+            @PathVariable String id,
+            @RequestBody Comment comment,
+            @RequestHeader("User-ID") String userID) {
+        return commentService.updateComment(id, comment, userID)
+                .map(updatedComment -> ResponseEntity.ok(updatedComment))
+                .onErrorResume(e -> {
+                    if (e.getMessage().contains("not authorized")) {
+                        return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+                    }
+                    return Mono.just(ResponseEntity.notFound().build());
+                });
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteComment(@PathVariable String id, @RequestBody Map<String, String> requestBody) {
-        try {
-            String userID = requestBody.get("userID");
-            commentService.deleteComment(id, userID);
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            logger.error("Error deleting comment", e);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+    public Mono<ResponseEntity<Void>> deleteComment(
+            @PathVariable String id,
+            @RequestHeader("User-ID") String userID) {
+        return commentService.deleteComment(id, userID)
+                .then(Mono.just(ResponseEntity.noContent().<Void>build()))
+                .onErrorResume(e -> {
+                    if (e.getMessage().contains("not authorized")) {
+                        return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+                    }
+                    return Mono.just(ResponseEntity.notFound().build());
+                });
     }
 }
