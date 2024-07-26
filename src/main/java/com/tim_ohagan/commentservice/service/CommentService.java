@@ -1,5 +1,6 @@
 package com.tim_ohagan.commentservice.service;
 
+import com.tim_ohagan.commentservice.controller.CommentController;
 import com.tim_ohagan.commentservice.model.Comment;
 import com.tim_ohagan.commentservice.repository.CommentRepository;
 import org.bson.types.ObjectId;
@@ -8,6 +9,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.time.Instant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class CommentService {
@@ -18,6 +21,9 @@ public class CommentService {
     @Autowired
     private SentimentService sentimentService;
 
+        private static final Logger logger = LoggerFactory.getLogger(CommentController.class);
+
+        
     public Flux<Comment> getCommentsByParent(String parentID, String parentType) {
         if (!ObjectId.isValid(parentID)) {
             return Flux.empty();
@@ -26,6 +32,7 @@ public class CommentService {
     }
 
     public Mono<Comment> createComment(Comment comment) {
+        logger.debug("Creating comment: {}", comment);
         if (!ObjectId.isValid(comment.getParentID().toHexString())) {
             return Mono.error(new IllegalArgumentException("Invalid parentID"));
         }
@@ -34,11 +41,12 @@ public class CommentService {
         comment.setUpdatedAt(Instant.now());
         
         return sentimentService.analyzeSentiment(comment.getContent())
-            .flatMap(sentimentResult -> {
-                comment.setSentimentScore(sentimentResult.getCompound_score());
-                comment.setSentiment(sentimentResult.getSentiment());
-                return commentRepository.save(comment);
-            });
+        .flatMap(sentimentResult -> {
+            logger.debug("Sentiment analysis result: {}", sentimentResult);
+            comment.setSentimentScore(sentimentResult.getCompound_score());
+            comment.setSentiment(sentimentResult.getSentiment());
+            return commentRepository.save(comment);
+        });
     }
 
     public Mono<Comment> updateComment(String id, Comment updatedComment, String userID) {
