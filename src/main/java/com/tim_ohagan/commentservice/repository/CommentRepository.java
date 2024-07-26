@@ -6,5 +6,5 @@ import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import reactor.core.publisher.Flux;
 
 public interface CommentRepository extends ReactiveMongoRepository<Comment, ObjectId> {
-    Flux<Comment> findByParentIDAndParentType(String parentID, String parentType);
+    Flux<Comment> findByParentIDAndParentType(ObjectId parentID, String parentType);
 }

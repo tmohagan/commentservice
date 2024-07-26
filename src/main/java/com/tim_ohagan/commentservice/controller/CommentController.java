@@ -2,6 +2,7 @@ package com.tim_ohagan.commentservice.controller;
 
 import com.tim_ohagan.commentservice.model.Comment;
 import com.tim_ohagan.commentservice.service.CommentService;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,21 +17,29 @@ public class CommentController {
     @Autowired
     private CommentService commentService;
 
-    @GetMapping
+    @GetMapping("/{parentType}/{parentID}")
     public Flux<Comment> getCommentsByParent(
-            @RequestParam String parentID,
-            @RequestParam String parentType) {
+            @PathVariable String parentID,
+            @PathVariable String parentType) {
         return commentService.getCommentsByParent(parentID, parentType);
     }
 
-    @PostMapping
-    public Mono<ResponseEntity<Comment>> createComment(@RequestBody Comment comment) {
+    @PostMapping("/{parentType}/{parentID}")
+    public Mono<ResponseEntity<Comment>> createComment(
+            @PathVariable String parentID,
+            @PathVariable String parentType,
+            @RequestBody Comment comment) {
+        if (!ObjectId.isValid(parentID)) {
+            return Mono.just(ResponseEntity.badRequest().build());
+        }
+        comment.setParentID(new ObjectId(parentID));
+        comment.setParentType(parentType);
         return commentService.createComment(comment)
                 .map(savedComment -> ResponseEntity.status(HttpStatus.CREATED).body(savedComment))
                 .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{parentType}/{id}")
     public Mono<ResponseEntity<Comment>> updateComment(
             @PathVariable String id,
             @RequestBody Comment comment,
@@ -45,7 +54,7 @@ public class CommentController {
                 });
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{parentType}/{id}")
     public Mono<ResponseEntity<Void>> deleteComment(
             @PathVariable String id,
             @RequestHeader("User-ID") String userID) {

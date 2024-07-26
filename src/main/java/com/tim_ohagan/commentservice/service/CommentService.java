@@ -22,11 +22,11 @@ public class CommentService {
         if (!ObjectId.isValid(parentID)) {
             return Flux.empty();
         }
-        return commentRepository.findByParentIDAndParentType(parentID, parentType);
+        return commentRepository.findByParentIDAndParentType(new ObjectId(parentID), parentType);
     }
 
     public Mono<Comment> createComment(Comment comment) {
-        if (!ObjectId.isValid(comment.getParentID())) {
+        if (!ObjectId.isValid(comment.getParentID().toHexString())) {
             return Mono.error(new IllegalArgumentException("Invalid parentID"));
         }
         
@@ -43,7 +43,7 @@ public class CommentService {
 
     public Mono<Comment> updateComment(String id, Comment updatedComment, String userID) {
         if (!ObjectId.isValid(id)) {
-            return Mono.error(new RuntimeException("Invalid comment ID"));
+            return Mono.error(new IllegalArgumentException("Invalid comment ID"));
         }
 
         ObjectId objectId = new ObjectId(id);
@@ -68,7 +68,7 @@ public class CommentService {
 
     public Mono<Void> deleteComment(String id, String userID) {
         if (!ObjectId.isValid(id)) {
-            return Mono.error(new RuntimeException("Invalid comment ID"));
+            return Mono.error(new IllegalArgumentException("Invalid comment ID"));
         }
 
         ObjectId objectId = new ObjectId(id);
