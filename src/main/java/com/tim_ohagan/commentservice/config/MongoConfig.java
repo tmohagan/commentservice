@@ -1,16 +1,17 @@
 package com.tim_ohagan.commentservice.config;
 
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
+import com.mongodb.reactivestreams.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoClients;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import org.springframework.data.mongodb.config.AbstractMongoClientConfiguration;
+import org.springframework.data.mongodb.config.AbstractReactiveMongoConfiguration;
+import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Configuration
-@Profile("!test")
-public class MongoConfig extends AbstractMongoClientConfiguration {
+@EnableReactiveMongoRepositories
+public class MongoConfig extends AbstractReactiveMongoConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoConfig.class);
     private final String mongoUri = System.getenv("MONGO_URI");
@@ -25,7 +26,8 @@ public class MongoConfig extends AbstractMongoClientConfiguration {
     }
 
     @Override
-    public MongoClient mongoClient() {
+    @Bean
+    public MongoClient reactiveMongoClient() {
         return MongoClients.create(mongoUri);
     }
 }
