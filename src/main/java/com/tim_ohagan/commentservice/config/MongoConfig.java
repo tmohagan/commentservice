@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 public class MongoConfig extends AbstractMongoClientConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoConfig.class);
-    private final String mongoUri = System.getProperty("MONGO_URI");
+    private final String mongoUri = System.getenv("MONGO_URI");
 
     public MongoConfig() {
         logger.info("MongoDB URI: " + mongoUri);

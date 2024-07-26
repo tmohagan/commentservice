@@ -26,17 +26,11 @@ public class CommentserviceApplication {
         try {
             Dotenv dotenv = Dotenv.load();
             System.setProperty("ALLOWED_ORIGINS", dotenv.get("ALLOWED_ORIGINS"));
-            System.setProperty("MONGO_URI", dotenv.get("MONGO_URI"));
         } catch (DotenvException e) {
-            // Fallback to system environment variables
             logger.warn("Failed to load .env file, falling back to system environment variables", e);
             String allowedOrigins = System.getenv("ALLOWED_ORIGINS");
             if (allowedOrigins != null) {
                 System.setProperty("ALLOWED_ORIGINS", allowedOrigins);
-            }
-            String mongoUri = System.getenv("MONGO_URI");
-            if (mongoUri != null) {
-                System.setProperty("MONGO_URI", mongoUri);
             }
         }
         
